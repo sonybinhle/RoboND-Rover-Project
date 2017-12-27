@@ -24,10 +24,15 @@ def restrictMaxVel(Rover):
     else:
         Rover.throttle = 0
 
+# Slow down the Rover by changing brake and throttle value to move gradually to the rock position
+# If the Rover is near the Rock, reduce the Rover's velocity by increase brake but
+# still prevent Rover to stop immediately by keeping velocity(using throttle)
+# + Distance 70: still far from rock, keep speed at around 1 m/s
+# + Distance 40: near the rock but not too close, keep speed at around 0.7 m/s
+# + Distance 20: near the rock, keep speed at low as possible 0.4 m/s
+# + Distance 10: beside the rock, should not increase speed more
+# using throttle=0.4 because in some hard positions, small throttle could not force Rover move forward
 def goToRock(Rover):
-    # Slow down the Rover by brake and throttle to move forward to the rock position
-    # If the Rover is near the Rock, reduce the Rover's velocity by increase brake but
-    # still prevent Rover to stop immediately
     if Rover.vel < 0.5:
         Rover.brake = 0
     elif Rover.vel < 1:

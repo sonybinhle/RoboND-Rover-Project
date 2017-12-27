@@ -165,6 +165,8 @@ def perception_step(Rover):
         if np.sqrt(yobs[idx]**2 + xobs[idx]**2) < 70:
             Rover.worldmap[y_obs_world[idx], x_obs_world[idx], 0] += 10 
 
+    # If rock appear in the image frame, find the nearest point of the Rock
+    # because the shorter distance points the more accuracy
     if threshed_rock.any():
         rock_dist, rock_angles = to_polar_coords(xrock, yrock)
         rock_idx = np.argmin(rock_dist)
