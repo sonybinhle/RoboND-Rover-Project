@@ -3,7 +3,7 @@ import cv2
 
 # Identify pixels above the threshold
 # Threshold of RGB > 160 does a nice job of identifying ground pixels only
-def color_thresh(img, rgb_thresh=(200, 180, 165)):
+def color_thresh(img, rgb_thresh=(160, 160, 160)):
     # Create an array of zeros same xy size as img, but single channel
     color_select = np.zeros_like(img[:,:,0])
     # Require that each pixel be above all three threshold values in RGB
@@ -138,6 +138,7 @@ def perception_step(Rover):
     # 5) Convert map image pixel values to rover-centric coords
 
     xpix, ypix = rover_coords(threshed)
+    xobs, yobs = rover_coords(threshed_obs)
     xrock, yrock = rover_coords(threshed_rock)
 
     # 6) Convert rover-centric pixel values to world coordinates
@@ -151,8 +152,18 @@ def perception_step(Rover):
         #          Rover.worldmap[rock_y_world, rock_x_world, 1] += 1
         #          Rover.worldmap[navigable_y_world, navigable_x_world, 2] += 1
 
-    Rover.worldmap[y_world, x_world, 2] += 10
-    Rover.worldmap[y_obs_world, x_obs_world, 0] += 1
+    #Rover.worldmap[y_world, x_world, 2] += 10
+    #Rover.worldmap[y_obs_world, x_obs_world, 0] += 1
+
+    # To improve Fidelity, only recognize points in near range(70)
+    # because points in a longer range may be incorrect due to the error during perspective transformation
+    for idx in range(len(y_world)):
+        if np.sqrt(ypix[idx]**2 + xpix[idx]**2) < 70:
+            Rover.worldmap[y_world[idx], x_world[idx], 2] += 10 
+
+    for idx in range(len(y_obs_world)):
+        if np.sqrt(yobs[idx]**2 + xobs[idx]**2) < 70:
+            Rover.worldmap[y_obs_world[idx], x_obs_world[idx], 0] += 10 
 
     if threshed_rock.any():
         rock_dist, rock_angles = to_polar_coords(xrock, yrock)
@@ -161,15 +172,19 @@ def perception_step(Rover):
         rock_nearest_y = y_rock_world[rock_idx]
         Rover.worldmap[rock_nearest_y, rock_nearest_x, 1] = 255
         Rover.vision_image[:, :, 1] = threshed_rock * 255
+        Rover.rock_angle = rock_angles[rock_idx] 
+        Rover.rock_dist = rock_dist[rock_idx] 
     else:
         Rover.vision_image[:, :, 1] = 0
+        Rover.rock_angle = None
+        Rover.rock_dist = None 
 
     # 8) Convert rover-centric pixel positions to polar coordinates
     # Update Rover pixel distances and angles
         # Rover.nav_dists = rover_centric_pixel_distances
-        # Rover.nav_angles = rover_centric_angles
+        # Rover.nav_angles = rover_centric_angle
     dist, angles = to_polar_coords(xpix, ypix)
-
     Rover.nav_angles = angles
+    Rover.nav_dists = dist 
     
     return Rover
